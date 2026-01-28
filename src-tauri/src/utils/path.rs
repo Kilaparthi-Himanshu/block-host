@@ -5,4 +5,9 @@ pub fn servers_dir() -> PathBuf {
     dir.push("BlockHost");
     dir.push("servers");
     dir
+
+    // This resolves to:
+    // Windows → C:\Users\<you>\AppData\Roaming\BlockHost\servers
+    // macOS → ~/Library/Application Support/BlockHost/servers (i.e. /Users/<your-username>/Library/Application Support/BlockHost/servers/)
+    // Linux → ~/.local/share/BlockHost/servers
 }

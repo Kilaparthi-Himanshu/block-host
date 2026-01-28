@@ -1,8 +1,10 @@
-mod state;
-mod commands;
+pub mod state;
+pub mod commands;
+pub mod utils;
 
 use crate::state::app_state::AppState;
 use crate::commands::system::ping;
+use crate::commands::server::create_server;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 
@@ -25,7 +27,7 @@ pub fn run() {
       }
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![ping, greet])
+    .invoke_handler(tauri::generate_handler![ping, greet, create_server])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
