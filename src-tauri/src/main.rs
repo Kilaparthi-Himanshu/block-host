@@ -4,7 +4,10 @@
 
 mod state;
 mod commands;
+mod utils;
 
 fn main() {
+    let path = utils::path::servers_dir();
+    // println!("GGWP: {:?}", path);
     app_lib::run();
 }
