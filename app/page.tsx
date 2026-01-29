@@ -1,21 +1,53 @@
 'use client';
 
 import { invoke } from "@tauri-apps/api/core";
+import { ServerCard } from "./components/ServerCreation/ServerCard";
+import { ServerCreateCard } from "./components/ServerCreation/ServerCreateCard";
+import ModalRenderer from "./components/ModalRenderer";
+import { useEffect, useState } from "react";
+import { ServerCreateModal } from "./components/ServerCreation/ServerCreateModal";
 
 export default function Home() {
-    const invokeRustCommand = () => {
-        // invoke<String>('greet', { name: "Himanshu", email: "himanshunani9@gmal.com" })
-        //     .then(result => console.log(result))
-        //     .catch(e => console.error(e));
+    const [serverCreateModalOpen, setServerCreateModalOpen] = useState(false);
+    const [serverVersions, setServerVersions] = useState<string[] | null>(null);
 
-        // invoke('ping').then(result => console.log(result)).catch(e => console.error(e));
+    const invokeRustCommand = () => {
         invoke('create_server', { name: 'First-Server', version: '1.21.9' })
             .then(result => console.log(result));
     }
 
+    useEffect(() => {
+        async function get_versions() {
+            try {
+                const data = await invoke<string[]>('get_mc_versions');
+                setServerVersions(data ?? null);
+                console.log(data);
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        get_versions();
+    }, []);
+
     return (
-        <div className="bg-neutral-900 w-full h-screen flex items-center justify-center">
-            <button className="bg-red-500 px-2 py-4 rounded-xl cursor-pointer active:scale-95 w-max h-max border border-white" onClick={invokeRustCommand}>CLICK ME!</button>
+        <div className="bg-neutral-900 w-full h-full flex p-4 gap-4 flex-wrap overflow-auto app-scroll relative">
+            <ServerCreateCard setIsOpen={setServerCreateModalOpen} />
+            {/* <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard />
+            <ServerCard /> */}
+            <ModalRenderer isOpen={serverCreateModalOpen}> {/* This allows for smoother fade out */}
+                <ServerCreateModal setIsOpen={setServerCreateModalOpen} versions={serverVersions} />
+            </ModalRenderer>
         </div>
     );
 }

@@ -1,0 +1,57 @@
+'use client';
+
+import { getCurrentWindow, Window } from "@tauri-apps/api/window";
+import { useEffect, useState } from "react";
+import { GoDash } from "react-icons/go";
+import { VscChromeMaximize } from "react-icons/vsc";
+import { VscChromeRestore } from "react-icons/vsc";
+import { IoClose } from "react-icons/io5";
+
+export const Titlebar = () => {
+    const [appWindow, setAppWindow] = useState<Window | null>(null);
+    const [isMaximized, setIsMaximized] = useState(false);
+
+    useEffect(() => {
+        const win = getCurrentWindow();
+        setAppWindow(win);
+
+        win.isMaximized().then(setIsMaximized);
+
+        const unlisten = win.onResized(() => {
+            win.isMaximized().then(setIsMaximized);
+        });
+
+        return () => {
+            unlisten.then((f) => f());
+        }
+    }, []);
+
+    const dragStyle = {
+        WebkitAppRegion: "drag",
+    } as React.CSSProperties & { WebkitAppRegion: "drag" };
+
+    const noDrag = {
+        WebkitAppRegion: "no-drag",
+    } as React.CSSProperties & { WebkitAppRegion: "no-drag" };
+
+    return (
+        <div 
+            className="w-full bg-linear-60 from-blue-300 to-green-300 h-8.75 flex items-center justify-between"
+            style={dragStyle}
+        >
+            <span className="text-md text-violet-700 font-semibold font-mono select-none px-2">BlockHost</span>
+
+            <div className="flex text-neutral-900 h-full" style={noDrag}>
+                <button onClick={() => appWindow?.minimize()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-cyan-500">
+                    <GoDash size={20} />
+                </button>
+                <button onClick={() => appWindow?.toggleMaximize()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-cyan-500">
+                    {isMaximized ? <VscChromeRestore size={20} /> : <VscChromeMaximize size={20} />}
+                </button>
+                <button onClick={() => appWindow?.close()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-red-500">
+                    <IoClose size={20} />
+                </button>
+            </div>
+        </div>
+    )
+}
