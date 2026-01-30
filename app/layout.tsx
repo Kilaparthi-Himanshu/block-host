@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { Titlebar } from "./components/Titlebar";
+import { TauriPlatformInit } from "./utils/tauriPlatformInit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased h-full flex flex-col overflow-hidden`}
             >
+                <TauriPlatformInit />
                 <Titlebar />
                 <div className="flex flex-row flex-1 overflow-hidden">
                     <Sidebar />

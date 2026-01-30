@@ -1,0 +1,14 @@
+Timeline for Loader Fetch:
+
+1. User selects a version
+2. Frontend calls get_supported_loaders
+3. Rust enters the loop
+4. Cache not ready yet
+5. Rust waits (does NOT error)
+6. Frontend is still awaiting → loadingLoaders === true
+7. Background startup task finishes fetching Fabric/Forge
+8. Cache becomes Some
+9. Rust returns SupportLoaders
+10. Frontend .then() fires
+11. setLoadingLoaders(false)
+12. UI updates → loader radios appear

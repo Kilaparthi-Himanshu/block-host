@@ -25,4 +25,5 @@ tauri = { version = "2.9.5", features = [] }
 tauri-plugin-log = "2"
 reqwest = { version = "0.13.1", features = ["json", "stream"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-dirs = "5"
+dirs = "6.0.0"
+tauri-plugin-os = "2"

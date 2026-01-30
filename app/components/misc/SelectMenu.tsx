@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export const SelectMenu = ({
     items,
@@ -11,8 +11,26 @@ export const SelectMenu = ({
     const [selectMenuOpen, setSelectMenuOpen] = useState(false);
     const [selected, setSelected] = useState("Select A Version");
 
+    const menuRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target as Node)
+            ) {
+                setSelectMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     return (
-        <div className="w-full relative">
+        <div className="w-full relative z-999" ref={menuRef}>
             <input 
                 className="outline-0 border-2 focus:border-amber-500 transition-[border] corner-squircle rounded-[20px] p-2 cursor-pointer w-full" 
                 value={selected} 
@@ -23,7 +41,7 @@ export const SelectMenu = ({
             <AnimatePresence>
                 {selectMenuOpen && items &&
                     <motion.div 
-                        className="w-full max-h-60 overflow-y-scroll corner-l-squircle rounded-l-[20px] bg-cyan-900 absolute mt-2 app-scroll p-2 pr-0"
+                        className="w-full max-h-60 overflow-y-scroll corner-l-squircle rounded-[20px] bg-cyan-900 absolute mt-2 app-scroll p-2"
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -31,7 +49,7 @@ export const SelectMenu = ({
                     >
                         {items.map(item =>
                             <div key={item} 
-                                className="w-full h-10 p-2 hover:bg-gray-900 transition-[background] duration-100 cursor-pointer corner-l-squircle rounded-l-[20px]"
+                                className="w-full h-10 p-2 hover:bg-gray-900 transition-[background] duration-100 cursor-pointer corner-l-squircle rounded-[20px]"
                                 onClick={() => {
                                     setSelected(item);
                                     setInstanceVersion(item);

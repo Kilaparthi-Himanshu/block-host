@@ -6,10 +6,13 @@ import { GoDash } from "react-icons/go";
 import { VscChromeMaximize } from "react-icons/vsc";
 import { VscChromeRestore } from "react-icons/vsc";
 import { IoClose } from "react-icons/io5";
+import { useAtomValue } from "jotai";
+import { isMacAtom } from "../atoms";
 
 export const Titlebar = () => {
     const [appWindow, setAppWindow] = useState<Window | null>(null);
     const [isMaximized, setIsMaximized] = useState(false);
+    const isMac = useAtomValue(isMacAtom);
 
     useEffect(() => {
         const win = getCurrentWindow();
@@ -37,21 +40,26 @@ export const Titlebar = () => {
     return (
         <div 
             className="w-full bg-linear-60 from-blue-300 to-green-300 h-8.75 flex items-center justify-between"
+            data-tauri-drag-region
             style={dragStyle}
         >
-            <span className="text-md text-violet-700 font-semibold font-mono select-none px-2">BlockHost</span>
-
-            <div className="flex text-neutral-900 h-full" style={noDrag}>
-                <button onClick={() => appWindow?.minimize()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-cyan-500">
-                    <GoDash size={20} />
-                </button>
-                <button onClick={() => appWindow?.toggleMaximize()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-cyan-500">
-                    {isMaximized ? <VscChromeRestore size={20} /> : <VscChromeMaximize size={20} />}
-                </button>
-                <button onClick={() => appWindow?.close()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-red-500">
-                    <IoClose size={20} />
-                </button>
+            <div className={`${isMac && "ml-18.75"} text-violet-700 font-semibold font-mono select-none px-2`}>
+                BlockHost
             </div>
+
+            {!isMac && 
+                <div className="flex text-neutral-900 h-full" style={noDrag}>
+                    <button onClick={() => appWindow?.minimize()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-cyan-500">
+                        <GoDash size={20} />
+                    </button>
+                    <button onClick={() => appWindow?.toggleMaximize()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-cyan-500">
+                        {isMaximized ? <VscChromeRestore size={20} /> : <VscChromeMaximize size={20} />}
+                    </button>
+                    <button onClick={() => appWindow?.close()} className="h-full w-10 flex items-center justify-center cursor-pointer hover:bg-red-500">
+                        <IoClose size={20} />
+                    </button>
+                </div>
+            }
         </div>
     )
 }

@@ -1,8 +1,10 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use crate::commands::versions_loaders::LoaderSupportCache;
 
 #[derive(Default)]
 pub struct AppState {
-    pub ping_count: Mutex<u32>,
+    pub ping_count: Arc<Mutex<u32>>,
+    pub loader_cache: Arc<Mutex<Option<LoaderSupportCache>>>,
 }
 
 impl AppState {
