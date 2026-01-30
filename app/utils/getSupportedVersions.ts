@@ -25,7 +25,6 @@ export function getSupportedVersions({
         invoke<SupportedLoadersType>("get_supported_loaders", { version: instanceVersion })
             .then((res) => {
                 setSupportedLoaders(res);
-                console.log(res);
             })
             .catch((err) => {
                 console.error(err);

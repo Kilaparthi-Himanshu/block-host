@@ -90,8 +90,17 @@ pub async fn fetch_forge_versions() -> HashSet<String> {
 
     text.lines()
         .filter_map(|line| {
-            // extract mc version prefix: 1.21.1-xx.x.x
-            line.split('-').next().map(String::from)
+            let line = line.trim();
+
+            if line.starts_with("<version>") && line.ends_with("</version>") {
+                let full = line
+                    .replace("<version>", "")
+                    .replace("</version>", "");
+
+                return full.split('-').next().map(String::from);
+            }
+
+            None
         })
         .collect()
 }

@@ -21,7 +21,6 @@ export default function Home() {
             try {
                 const data = await invoke<string[]>('get_mc_versions');
                 setServerVersions(data ?? null);
-                console.log(data);
             } catch(err) {
                 console.error(err);
             }
