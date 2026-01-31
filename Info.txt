@@ -12,3 +12,35 @@ Timeline for Loader Fetch:
 10. Frontend .then() fires
 11. setLoadingLoaders(false)
 12. UI updates → loader radios appear
+
+Fabric Server Install
+
+1. You download Fabric Installer
+2. You run it with arguments
+3. It:
+    * downloads vanilla server
+    * patches it
+    * generates a Fabric server launcher jar
+    * creates .fabric/ + libraries/
+
+Official command Fabric uses
+java -jar fabric-installer.jar server \
+  -mcversion 1.21.1 \
+  -downloadMinecraft
+
+Assumptions (reasonable for now)
+1. Java is installed and available as java
+2. You want the latest Fabric installer
+3. Blocking execution is okay (for now)
+
+Forge Server Install
+
+1. You download a Forge installer JAR
+2. You run it with --installServer
+3. It:
+    * downloads vanilla
+    * sets up libraries
+    * generates:
+        > run.bat / run.sh
+        > a Forge launcher jar
+        > libraries/

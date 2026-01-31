@@ -41,7 +41,7 @@ export const SelectMenu = ({
             <AnimatePresence>
                 {selectMenuOpen && items &&
                     <motion.div 
-                        className="w-full max-h-60 overflow-y-scroll corner-l-squircle rounded-[20px] bg-cyan-900 absolute mt-2 app-scroll p-2 shadow-xl    "
+                        className="w-full max-h-60 overflow-y-scroll corner-squircle rounded-[20px] bg-cyan-900 absolute mt-2 app-scroll p-2 shadow-2xl"
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -49,7 +49,7 @@ export const SelectMenu = ({
                     >
                         {items.map(item =>
                             <div key={item} 
-                                className="w-full h-10 p-2 hover:bg-gray-900 transition-[background] duration-100 cursor-pointer corner-l-squircle rounded-[20px]"
+                                className="w-full h-10 p-2 hover:bg-gray-900 transition-[background] duration-100 cursor-pointer corner-squircle rounded-[20px]"
                                 onClick={() => {
                                     setSelected(item);
                                     setInstanceVersion(item);

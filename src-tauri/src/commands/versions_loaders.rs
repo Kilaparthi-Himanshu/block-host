@@ -97,10 +97,31 @@ pub async fn fetch_forge_versions() -> HashSet<String> {
                     .replace("<version>", "")
                     .replace("</version>", "");
 
-                return full.split('-').next().map(String::from);
+                let mc_version = full.split('-').next()?;
+
+                if is_supported_forge_mc(mc_version) {
+                    return Some(mc_version.to_string());
+                }
             }
 
             None
         })
         .collect()
+}
+
+// To Make sure forge is only for versions above or equal to 1.7.10 as automation fails for below versions
+fn is_supported_forge_mc(version: &str) -> bool {
+    if version == "1.7.10" {
+        return true;
+    }
+
+    let mut parts = version.split(".");
+    let major = parts.next().and_then(|v| v.parse::<u32>().ok());
+    let minor = parts.next().and_then(|v| v.parse::<u32>().ok());
+
+    match (major, minor) {
+        (Some(1), Some(minor)) => minor >= 8, // 1.8+
+        (Some(ma), _) if ma > 1 => true, // “Match (Some(ma), _), but only if ma > 1.” future-proof
+        _ => false
+    }
 }

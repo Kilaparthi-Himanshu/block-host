@@ -1,8 +1,12 @@
 #![allow(dead_code, unused, unused_imports)]
 
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, ser};
+use std::f32::consts::E;
+use std::fmt::format;
 use std::{fs, path::PathBuf};
+use std::process::Command;
+use serde_json::Value;
 
 use crate::utils::path::servers_dir;
 
@@ -21,14 +25,25 @@ struct DownloadInfo {
     url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum LoaderType {
+    Vanilla,
+    Fabric,
+    Forge,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateServerResult {
+    pub success: bool,
+    pub path: String
+}
+
 #[tauri::command]
-pub async fn create_server(name: String, version: String) -> Result<String, String> {
-    // Create server folder
+pub async fn create_server(name: String, version: String, loader: LoaderType) -> Result<CreateServerResult, String> {
     let mut server_path = servers_dir();
     server_path.push(&version);
     server_path.push(&name);
-
-    println!("{:?}", server_path);
 
     if server_path.exists() {
         return Err("Server already exists".into());
@@ -36,6 +51,27 @@ pub async fn create_server(name: String, version: String) -> Result<String, Stri
 
     fs::create_dir_all(&server_path).map_err(|e| e.to_string())?;
 
+    match loader {
+        LoaderType::Vanilla => {
+            create_vanilla_server(&name, &version, &server_path).await?
+        }
+        LoaderType::Fabric => {
+            create_fabric_server(&version, &server_path).await?
+        }
+        LoaderType::Forge => {
+            create_forge_server(&version, &server_path).await?
+        }
+    }
+
+    fs::write(server_path.join("eula.txt"), "eula=true\n").map_err(|e| e.to_string())?;
+
+    Ok(CreateServerResult { 
+        success: true, 
+        path: server_path.to_string_lossy().to_string()
+    })
+}
+
+pub async fn create_vanilla_server(name: &str, version: &str, server_path: &PathBuf) -> Result<(), String> {
     // Fetch version manifest
     let client = Client::new();
 
@@ -48,8 +84,11 @@ pub async fn create_server(name: String, version: String) -> Result<String, Stri
         .await
         .map_err(|e| e.to_string())?;
 
-    let versions = manifest["versions"].as_array().ok_or("Invalid Manifest")?;
+    let versions = manifest["versions"]
+        .as_array()
+        .ok_or("Invalid Manifest")?;
 
+    // Find the selected version
     let version_url = versions
         .iter()
         .find(|v| v["id"] == version)
@@ -68,6 +107,7 @@ pub async fn create_server(name: String, version: String) -> Result<String, Stri
 
     println!("{:?}", details);
 
+    // Extract server download URL
     let server_url = details.downloads.server.url;
 
     // Download server.jar
@@ -83,11 +123,154 @@ pub async fn create_server(name: String, version: String) -> Result<String, Stri
 
     fs::write(&jar_path, bytes).map_err(|e| e.to_string())?;
 
-    // Write eula.txt
-    fs::write(server_path.join("eula.txt"), "eula=true\n").map_err(|e| e.to_string())?;
+    Ok(())
+}
 
-    Ok(format!(
-        "Server {} ({}) created successfully",
-        name, version
-    ))
+pub async fn create_fabric_server(version: &str, server_path: &PathBuf) -> Result<(), String> {
+    let client = Client::new();
+
+    // Fetch latest Fabric installer info
+    let installers: Value = client
+        .get("https://meta.fabricmc.net/v2/versions/installer")
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch Fabric installer list: {}", e))?
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse Fabric installer list: {}", e))?;
+
+    let installer = installers
+        .as_array()
+        .and_then(|arr| arr.first())
+        .ok_or("No Fabric installer versions found")?;
+
+    let installer_version = installer["version"]
+        .as_str()
+        .ok_or("Invalid Fabric installer version")?;
+
+    let installer_url = format!(
+        "https://maven.fabricmc.net/net/fabricmc/fabric-installer/{0}/fabric-installer-{0}.jar",
+        installer_version
+    );
+
+    // Download Fabric installer
+    let installer_path = server_path.join("fabric-installer.jar");
+
+    let bytes = client
+        .get(&installer_url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download Fabric installer: {}", e))?
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read Fabric installer bytes: {}", e))?;
+
+    fs::write(&installer_path, bytes)
+        .map_err(|e| format!("Failed to write Fabric installer: {}", e))?;
+
+    // Run Fabric installer
+    let status = Command::new("java")
+        .arg("-jar")
+        .arg("fabric-installer.jar")
+        .arg("server")
+        .arg("-mcversion")
+        .arg(version)
+        .arg("-downloadMinecraft")
+        .current_dir(server_path)
+        .status()
+        .map_err(|e| format!("Failed to run Fabric installer (is Java installed?): {}", e))?;
+
+        // java -jar fabric-installer.jar server \
+        //     -mcversion 1.21.1 \
+        //     -downloadMinecraft
+
+    if !status.success() {
+        return Err("Fabric installer failed".into());
+    }
+
+    Ok(())
+}
+
+pub async fn create_forge_server(version: &str, server_path: &PathBuf) -> Result<(), String> {
+    let client = Client::new();
+
+    // Resolve real Forge version
+    let forge_version = resolve_latest_forge_build(version).await?;
+
+    // Build Forge installer URL
+    let installer_url = format!(
+        "https://maven.minecraftforge.net/net/minecraftforge/forge/{0}/forge-{0}-installer.jar", 
+        forge_version
+    );
+
+    let installer_path = server_path.join("forge-installer.jar");
+
+    // Download Forge installer
+    let bytes = client
+        .get(&installer_url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download Forge installer: {}", e))?
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read Forge installer bytes: {}", e))?;
+
+    // Safety check
+    if bytes.len() < 1_000_000 {
+        return Err(format!(
+            "Invalid Forge installer downloaded for {}",
+            forge_version
+        ));
+    }
+
+    println!("Downloaded forge installer size: {} bytes", bytes.len());
+
+    fs::write(&installer_path, bytes)
+        .map_err(|e|  format!("Failed to write Forge installer: {}", e))?;
+
+    // Run Forge installer
+    let status = Command::new("java")
+        .arg("-jar")
+        .arg("forge-installer.jar")
+        .arg("--installServer")
+        .current_dir(server_path)
+        .status()
+        .map_err(|e| format!("Failed to run Forge installer (is Java installed?): {}", e))?;
+
+    if !status.success() {
+        return Err("Forge installer failed".into());
+    }
+
+    Ok(())
+}
+
+async fn resolve_latest_forge_build(version: &str) -> Result<String, String> {
+    let text = reqwest::get(
+        "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
+    )
+    .await
+    .map_err(|e| e.to_string())?
+    .text()
+    .await
+    .map_err(|e| e.to_string())?;
+
+    for line in text.lines() {
+        let line = line.trim();
+
+        if line.starts_with("<version>") && line.ends_with("</version>") {
+            let full = line
+                .replace("<version>", "")
+                .replace("</version>", "");
+
+            let parts: Vec<&str> = full.splitn(2, '-').collect();
+            let mc_version = parts[0];
+
+            if mc_version == version {
+                println!("{}", full);
+                return Ok(full)
+            }
+        }
+    }
+
+    Err(format!("No Forge build found for Minecraft {}", version))
 }

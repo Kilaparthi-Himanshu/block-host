@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { LoaderType, SupportedLoadersType } from "../components/ServerCreation/ServerCreateModal";
 import { invoke } from "@tauri-apps/api/core";
 
-export function getSupportedVersions({
+export function useSupportedLoaders({
     instanceVersion,
     setSelectedLoader,
     setSupportedLoaders,

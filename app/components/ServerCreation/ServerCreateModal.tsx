@@ -2,11 +2,13 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useState } from "react";
 import { SelectMenu } from "../misc/SelectMenu";
 import DiscreteSlider from "../misc/Slider";
-import { getSupportedVersions } from "@/app/utils/getSupportedVersions";
+import { useSupportedLoaders } from "@/app/utils/useSupportedLoaders";
 import { useAtomValue } from "jotai";
 import { isMacAtom } from "@/app/atoms";
 import { RadioSelect } from "../misc/RadioSelect";
 import { IoCloseCircle } from "react-icons/io5";
+import { createServer } from "@/app/utils/createServer";
+import { notifyError, notifySuccess } from "@/app/utils/alerts";
 
 export type LoaderType = "vanilla" | "fabric" | "forge";
 export type SupportedLoadersType = {
@@ -49,7 +51,7 @@ export const ServerCreateModal = ({
         convertVersionList();
     }, [versions]);
 
-    getSupportedVersions({
+    useSupportedLoaders({
         instanceVersion,
         setSelectedLoader,
         setSupportedLoaders,
@@ -76,6 +78,38 @@ export const ServerCreateModal = ({
         ] as const)
     : [];
 
+    const handleCreateServer = async () => {
+        try {
+            if (!instanceName) {
+                notifyError("Server Instance Name Is Required!");
+                return;
+            }
+
+            if (!instanceVersion) {
+                notifyError("Server Version Is Required!");
+                return;
+            }
+
+            if (!selectedLoader) {
+                notifyError("Loader Type Is Required!");
+                return;
+            }
+
+            await createServer({
+                name: instanceName!,
+                version: instanceVersion!,
+                loader: selectedLoader!,
+                ramGB
+            });
+
+            notifySuccess({
+                message: "Server Created Successfully!"
+            })
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     return (
         <motion.div 
             className='absolute top-0 left-0 size-full bg-black/70 flex items-center justify-center z-205 text-white p-2 font-mono'
@@ -89,7 +123,7 @@ export const ServerCreateModal = ({
             // }}
         >
             <motion.div 
-                className={`w-110 h-150 bg-gray-800 corner-squircle rounded-[30px] flex flex-col items-center ${isMac && 'rounded-xl relative'}`}
+                className={`w-110 h-max bg-gray-800 corner-squircle rounded-[30px] flex flex-col items-center ${isMac && 'rounded-xl'} relative`}
                 onClick={(e) => e.stopPropagation()}
                 initial={{ y: -10 }}
                 animate={{ y: 0 }}
@@ -112,7 +146,7 @@ export const ServerCreateModal = ({
 
                 <div className="border-b border-[#fbbf24] w-full" />
 
-                <div className="w-full h-full flex flex-col gap-8 p-4 font-semibold overflow-y-auto">
+                <div className="w-full h-full flex flex-col gap-8 p-4 font-semibold overflow-y-auto overflow-x-hidden app-scroll">
                     <div className="flex flex-col gap-3">
                         <span className="underline">Instance Name:</span>
 
@@ -139,7 +173,7 @@ export const ServerCreateModal = ({
                         )}
 
                         {instanceVersion && loadingLoaders && (
-                            <span className="text-sm text-amber-400">
+                            <span className="text-sm text-[#fbbf24]">
                                 Checking available loaders...
                             </span>
                         )}
@@ -156,16 +190,18 @@ export const ServerCreateModal = ({
                     <div className="flex flex-col gap-3">
                         <span className="underline">RAM Allocated:</span>
 
-                        <DiscreteSlider 
-                            ariaLabel="Ram Allocation"
-                            value={ramGB}
-                            step={1}
-                            min={1}
-                            max={16}
-                            marks={ramMarks}
-                            unit="GB"
-                            onChange={setRamGB}
-                        />
+                        <div className="w-full px-1">
+                            <DiscreteSlider 
+                                ariaLabel="Ram Allocation"
+                                value={ramGB}
+                                step={1}
+                                min={1}
+                                max={16}
+                                marks={ramMarks}
+                                unit="GB"
+                                onChange={setRamGB}
+                            />
+                        </div>
 
                         <span className="text-sm text-amber-400">
                             {ramGB <= 3 && "Good for small vanilla servers"}
@@ -173,8 +209,17 @@ export const ServerCreateModal = ({
                             {ramGB > 4 && "Best for modded servers"}
                         </span>
                     </div>
+
+                    <div className="w-full flex justify-end">
+                        <button 
+                            className="bg-[#fbbf24] px-4 py-2 text-stone-800 corner-squircle rounded-2xl cursor-pointer shadow-xl active:scale-97 active:bg-[#bb8e1e] transition-[scale,background]"
+                            onClick={handleCreateServer}
+                        >
+                            Create!
+                        </button>
+                    </div>
                 </div>
             </motion.div>
         </motion.div>
-    )
+    );
 }

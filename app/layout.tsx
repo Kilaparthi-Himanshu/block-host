@@ -4,6 +4,7 @@ import "./globals.css";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { Titlebar } from "./components/Titlebar";
 import { TauriPlatformInit } from "./utils/tauriPlatformInit";
+import { ToastContainer } from "react-toastify";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,9 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased h-full flex flex-col overflow-hidden`}
             >
+                <ToastContainer
+                    style={{ marginTop: "40px" }}
+                />
                 <TauriPlatformInit />
                 <Titlebar />
                 <div className="flex flex-row flex-1 overflow-hidden">
