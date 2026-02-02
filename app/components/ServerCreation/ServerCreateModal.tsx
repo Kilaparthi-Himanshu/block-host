@@ -119,9 +119,10 @@ export const ServerCreateModal = ({
 
             await refreshServers();
 
+            setIsOpen(false);
+
             notifySuccess({
                 message: "Server Created Successfully!",
-                onClose: () => setIsOpen(false),
                 hideProgressBar: false
             });
         } catch (err) {
@@ -156,7 +157,7 @@ export const ServerCreateModal = ({
 
                 <IoCloseCircle 
                     size={30} 
-                    className="absolute right-2 top-2 cursor-pointer text-red-500 hover:scale-120 transition-[scale]" 
+                    className="absolute right-2 top-2 cursor-pointer text-red-500 active:scale-95 transition-[scale]" 
                     title="Close"
                     onClick={(e) => {
                         e.preventDefault();

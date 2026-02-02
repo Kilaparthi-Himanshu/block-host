@@ -34,7 +34,7 @@ export const Titlebar = () => {
             className="w-full bg-linear-60 from-blue-300 to-neutral-950 h-8.75 flex items-center justify-between"
             data-tauri-drag-region
         >
-            <div className={`${isMac && "ml-18.75"} text-violet-700 font-semibold font-mono select-none px-2`}>
+            <div className={`${isMac && "ml-18.75"} text-emerald-700 font-semibold font-mono select-none px-2`}>
                 Cubely
             </div>
 
@@ -52,5 +52,5 @@ export const Titlebar = () => {
                 </div>
             }
         </div>
-    )
+    );
 }
