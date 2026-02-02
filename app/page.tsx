@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { ServerCard } from "./components/ServerCreation/ServerCard";
 import { ServerCreateCard } from "./components/ServerCreation/ServerCreateCard";
 import ModalRenderer from "./components/ModalRenderer";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ServerCreateModal } from "./components/ServerCreation/ServerCreateModal";
 import { ServerConfig, serversAtom } from "./atoms";
 import { useAtom, useAtomValue } from "jotai";
@@ -42,11 +42,16 @@ export default function Home() {
         loadServers();
     }, []);
 
+    const sortedArrays = useMemo(() => {
+        if (!servers) return [];
+        return [...servers].sort((a, b) => b.created_at - a.created_at);
+    }, [servers]);
+
     return (
         <div className="bg-neutral-900 w-full h-full flex p-4 gap-4 flex-wrap app-scroll relative">
             <ServerCreateCard setIsOpen={setServerCreateModalOpen} />
 
-            {servers?.map(server => (
+            {sortedArrays?.map(server => (
                 <ServerCard server={server} key={server.id} />
             ))}
 
