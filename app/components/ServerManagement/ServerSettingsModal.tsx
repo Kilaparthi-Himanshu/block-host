@@ -10,24 +10,24 @@ import { SwitchToggle } from "../misc/Switch";
 import { SelectMenu } from "../misc/SelectMenu";
 
 type ServerProperties = {
-    motd: string // Done
-    online_mode: boolean // Done
-    max_players: number // Done
-    difficulty: string // Done
+    motd: string,
+    online_mode: boolean,
+    max_players: number,
+    difficulty: string,
     gamemode: string
-    pvp: boolean // Done
-    spawn_protection: number // Done
-    view_distance: number // Done
-    simulation_distance: number // Done
-    server_port: number
+    pvp: boolean,
+    spawn_protection: number,
+    view_distance: number,
+    simulation_distance: number,
+    server_port: number,
 }
 
 export const ServerSettingsModal = ({ 
     setIsOpen, 
     server,
 }: { 
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, 
-    server: ServerConfig
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    server: ServerConfig;
 }) => {
     const DIFFICULTIES = ["peaceful", "easy", "normal", "hard"];
 
@@ -339,7 +339,7 @@ export const ServerSettingsModal = ({
                             Default Minecraft port is 25565.
                         </span>
 
-                        <span className={`text-sm ${form.server_port !== 25565 ? "text-amber-400" : "text-gray-400"}`}>
+                        <span className={`text-sm ${form.server_port !== 25565 ? "text-amber-400" : "text-gray-400"} transition-colors`}>
                             Non-default ports may require firewall or router changes.
                         </span>
                     </div>
