@@ -122,7 +122,7 @@ export const ServerCreateModal = ({
             setIsOpen(false);
 
             notifySuccess({
-                message: "Server Created Successfully!",
+                message: "Server created successfully!",
                 hideProgressBar: false
             });
         } catch (err) {

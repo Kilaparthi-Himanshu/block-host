@@ -1,15 +1,17 @@
 import { isMacAtom, ServerConfig } from "@/app/atoms";
-import { notifyError } from "@/app/utils/alerts";
+import { notifyError, notifySuccess } from "@/app/utils/alerts";
 import { invoke } from "@tauri-apps/api/core";
 import { motion } from "framer-motion";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { IoCloseCircle } from "react-icons/io5";
-import { Loader } from "../misc/Loader";
+import { Loader, LoaderRenderer } from "../misc/Loader";
 import { SwitchToggle } from "../misc/Switch";
 import { SelectMenu } from "../misc/SelectMenu";
+import { readServerProperties, updateServerProperties } from "@/app/utils/server/serverProperties";
+import { refreshServers } from "@/app/utils/server/refreshServers";
 
-type ServerProperties = {
+export type ServerProperties = {
     motd: string,
     online_mode: boolean,
     max_players: number,
@@ -33,24 +35,23 @@ export const ServerSettingsModal = ({
 
     const isMac = useAtomValue(isMacAtom);
     const [form, setForm] = useState<ServerProperties | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         async function getServerProperties() {
-            const props = await invoke<ServerProperties>(
-                  "read_server_properties",
-                { serverPath: server.path }
-            ).catch(err => {
-                notifyError("Something went wrong, please reopen settings and try again!");
+            try {
+                const props = await readServerProperties(server);
+                if (props) {
+                    setForm(props);
+                }
+            } catch(err) {
                 console.error(err);
                 setIsOpen(false);
-            });
-
-            console.log(props);
-            setForm(props!);
+            }
         }
 
         getServerProperties();
-    }, []);
+    }, [server]);
 
     const updateField = <K extends keyof ServerProperties>(
         key: K,
@@ -87,8 +88,35 @@ export const ServerSettingsModal = ({
         return Math.min(Math.max(value, min), max);
     }
 
-    const handleEditServerProperties = () => {
+    const handleEditServerProperties = async () => {
+        try {
+            setLoading(true);
 
+            if (!form?.motd) {
+                notifyError("Message of the day can't be empty!");
+            }
+
+            if (!form) {
+                notifyError("An error has occured!");
+                return;
+            }
+
+            await updateServerProperties(server, form);
+
+            await refreshServers();
+
+            setIsOpen(false);
+
+            notifySuccess({
+                message: "Server properties updated successfully!",
+                hideProgressBar: false
+            });
+        } catch (err) {
+            notifyError("Something went wrong, please reopen settings and try again!");
+            console.error("Edit server properties failed:", err);
+        } finally {
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
@@ -117,6 +145,8 @@ export const ServerSettingsModal = ({
                 exit={{ y: -10 }}
                 transition={{ duration: 0.2 }}
             >
+                {/* {loading && <LoaderRenderer text="Changing Server Properties..." />} */}
+
                 <IoCloseCircle
                     size={30} 
                     className="absolute right-2 top-2 cursor-pointer text-red-500 active:scale-95 transition-[scale]" 
@@ -253,7 +283,7 @@ export const ServerSettingsModal = ({
                         />
 
                         <span className={`text-xs transition-colors ${
-                                form.spawn_protection > 16
+                                form.spawn_protection > 16 || form.spawn_protection === 0
                                     ? "text-amber-400"
                                     : "text-gray-400"
                                 }`}
