@@ -17,6 +17,7 @@ use crate::commands::server_management::write_server_properties;
 use crate::commands::server_management::get_active_server;
 use crate::commands::server_management::start_server;
 use crate::commands::server_management::stop_server;
+use crate::commands::server_management::read_server_config;
 use crate::state::app_state::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -64,7 +65,8 @@ pub fn run() {
             write_server_properties,
             get_active_server,
             start_server,
-            stop_server
+            stop_server,
+            read_server_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

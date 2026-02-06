@@ -4,10 +4,21 @@ use serde::{Deserialize, Serialize};
 
 use crate::{commands::server_creation::LoaderType, state::app_state::AppState, utils::path::servers_dir};
 
+/// READING AND WRITING OF SERVERS
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TunnelConfig {
     pub enabled: bool,
     pub provider: String, // "ngrok"
+}
+
+impl Default for TunnelConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            provider: "ngrok".into()
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -75,6 +86,7 @@ pub struct ServerProperties {
     pub server_port: u16
 }
 
+// Returns the HashMap of all the server propertiy pairs
 pub fn map_server_properties(server_path: &String) -> Result<HashMap<String, String>, String> {
     let content = fs::read_to_string(
         PathBuf::from(server_path).join("server.properties")
@@ -144,6 +156,67 @@ pub async fn write_server_properties(
 
     Ok(())
 }
+
+/// READING AND WRITING SERVER CONFIG (cubely.json)
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EditableServerConfig {
+    pub name: String,
+    pub ram_gb: u8,
+
+    #[serde(default)]
+    pub tunnel: TunnelConfig,
+}
+
+impl Default for EditableServerConfig {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            ram_gb: 2,
+            tunnel: TunnelConfig::default(),
+        }
+    }
+}
+
+#[tauri::command]
+pub fn read_server_config(server_path: String) -> Result<EditableServerConfig, String> {
+    let path = PathBuf::from(server_path).join("cubely.json");
+
+    let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut full: ServerConfig = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+
+    Ok(EditableServerConfig {
+        name: full.name.clone(),
+        ram_gb: full.ram_gb,
+        tunnel: full.tunnel.unwrap_or(TunnelConfig::default())
+    })
+}
+
+#[tauri::command]
+pub fn update_server_config(
+    server_path: String,
+    update: EditableServerConfig
+) -> Result<(), String> {
+    let path = PathBuf::from(server_path).join("cubely.josn");
+
+    let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut full: ServerConfig = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+
+    // Only allow safe fields
+    full.name = update.name;
+    full.ram_gb = update.ram_gb;
+    full.tunnel = Some(update.tunnel);
+
+    fs::write(
+        &path,
+        serde_json::to_string_pretty(&full).unwrap(),
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// SERVER STARTUP AND STOPPING
 
 #[derive(Debug)]
 pub struct ActiveServer {

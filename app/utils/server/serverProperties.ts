@@ -14,7 +14,7 @@ export async function readServerProperties(serverPath: string) {
     return props;
 }
 
-export async function updateServerProperties(server: ServerConfig, form: ServerProperties) {
+export async function updateServerProperties(serverPath: string, form: ServerProperties) {
     if (!form) {
         throw new Error("An error has occured!");
     }
@@ -26,5 +26,21 @@ export async function updateServerProperties(server: ServerConfig, form: ServerP
         }
     }
 
-    const res = await invoke('write_server_properties', { serverPath: server.path, props: form });
+    const res = await invoke(
+        'write_server_properties', 
+        { serverPath, props: form }
+    ).catch(err => {
+        throw err;
+    });
+}
+
+export async function readServerConfig(serverPath: string) {
+    const props = await invoke<ServerConfig>(
+        'read_server_config',
+        { serverPath }
+    ).catch(err => {
+        throw err;
+    });
+
+    return props;
 }

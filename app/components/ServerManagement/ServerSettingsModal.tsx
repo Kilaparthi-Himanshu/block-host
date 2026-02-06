@@ -8,7 +8,7 @@ import { IoCloseCircle } from "react-icons/io5";
 import { Loader, LoaderRenderer } from "../misc/Loader";
 import { SwitchToggle } from "../misc/Switch";
 import { SelectMenu } from "../misc/SelectMenu";
-import { readServerProperties, updateServerProperties } from "@/app/utils/server/serverProperties";
+import { readServerConfig, readServerProperties, updateServerProperties } from "@/app/utils/server/serverProperties";
 import { refreshServers } from "@/app/utils/server/refreshServers";
 
 export type ServerProperties = {
@@ -51,6 +51,22 @@ export const ServerSettingsModal = ({
         }
 
         getServerProperties();
+    }, [server]);
+
+    useEffect(() => {
+        async function getServerConfig() {
+            try {
+                const props = await readServerConfig(server.path);
+                // if (props) {
+                    console.log(props);
+                // }
+            } catch(err) {
+                console.error(err);
+                setIsOpen(false);
+            }
+        }
+
+        getServerConfig();
     }, [server]);
 
     const updateField = <K extends keyof ServerProperties>(
@@ -101,7 +117,7 @@ export const ServerSettingsModal = ({
                 return;
             }
 
-            await updateServerProperties(server, properties);
+            await updateServerProperties(server.path, properties);
 
             await refreshServers();
 
@@ -119,9 +135,9 @@ export const ServerSettingsModal = ({
         }
     }
 
-    useEffect(() => {
-        console.log(properties);
-    }, [properties]);
+    // useEffect(() => {
+    //     console.log(properties);
+    // }, [properties]);
 
     if (!properties) return <Loader />
 
@@ -223,7 +239,7 @@ export const ServerSettingsModal = ({
                         <input 
                             className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
                             value={properties.max_players ?? 20}
-                            onChange={(e) => {console.log(Number(e.target.value)); updateField("max_players", Number(e.target.value))}}
+                            onChange={(e) => updateField("max_players", Number(e.target.value))}
                             type="number"
                             min="1"
                         />
@@ -271,11 +287,7 @@ export const ServerSettingsModal = ({
                         <input 
                             className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
                             value={properties.spawn_protection ?? 16}
-                            onChange={(e) => {
-                                    console.log(Number(e.target.value)); 
-                                    handleNumberChange("spawn_protection", e.target.value);
-                                }
-                            }
+                            onChange={(e) => handleNumberChange("spawn_protection", e.target.value)}
                             onBlur={() => handleNumberBlur("spawn_protection", 0, 128)}
                             type="number"
                             min={0}
@@ -301,11 +313,7 @@ export const ServerSettingsModal = ({
                         <input 
                             className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
                             value={properties.view_distance ?? 10}
-                            onChange={(e) => {
-                                    console.log(Number(e.target.value)); 
-                                    handleNumberChange("view_distance", e.target.value);
-                                }
-                            }
+                            onChange={(e) => handleNumberChange("view_distance", e.target.value)}
                             onBlur={() => handleNumberBlur("view_distance", 2, 32)}
                             type="number"
                             min={2}
@@ -324,11 +332,7 @@ export const ServerSettingsModal = ({
                         <input 
                             className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
                             value={properties.simulation_distance ?? 10}
-                            onChange={(e) => {
-                                    console.log(Number(e.target.value)); 
-                                    handleNumberChange("simulation_distance", e.target.value);
-                                }
-                            }
+                            onChange={(e) => handleNumberChange("simulation_distance", e.target.value)}
                             onBlur={() => handleNumberBlur("simulation_distance", 2, Math.min(32, properties.view_distance))}
                             type="number"
                             min={2}
@@ -353,11 +357,7 @@ export const ServerSettingsModal = ({
                         <input 
                             className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
                             value={properties.server_port ?? 10}
-                            onChange={(e) => {
-                                    console.log(Number(e.target.value)); 
-                                    handleNumberChange("server_port", e.target.value);
-                                }
-                            }
+                            onChange={(e) => handleNumberChange("server_port", e.target.value)}
                             onBlur={() => handleNumberBlur("server_port", 1024, 65535)}
                             type="number"
                             min={1024}
