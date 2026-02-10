@@ -7,6 +7,8 @@ pub struct AppState {
     pub loader_cache: Arc<Mutex<Option<LoaderSupportCache>>>,
     pub active_server: Arc<Mutex<Option<ActiveServer>>>,
     pub java_base_dir: Arc<Mutex<Option<PathBuf>>>,
+    pub ngrok_base_dir: Arc<Mutex<Option<PathBuf>>>,
+    pub playit_base_dir: Arc<Mutex<Option<PathBuf>>>,
 }
 
 impl AppState {

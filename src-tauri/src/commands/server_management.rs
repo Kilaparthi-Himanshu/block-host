@@ -3,6 +3,8 @@ use std::{fs, path::PathBuf, process::Command};
 use serde::{Deserialize, Serialize};
 
 use crate::commands::java_manager::{install_java, java_binary, java_installed, require_java};
+use crate::commands::ngrok_manager::{install_ngrok, ngrok_binary, ngrok_installed, start_ngrok};
+use crate::commands::playit_manager::{install_playit, playit_installed, start_playit};
 use crate::{
     commands::server_creation::LoaderType, state::app_state::AppState, utils::path::servers_dir,
 };
@@ -12,14 +14,14 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TunnelConfig {
     pub enabled: bool,
-    pub provider: String, // "ngrok"
+    pub provider: String, // "playit"
 }
 
 impl Default for TunnelConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            provider: "ngrok".into(),
+            provider: "playit".into(),
         }
     }
 }
@@ -247,6 +249,7 @@ pub struct ActiveServer {
     pub server_id: String,
     pub mc_child: Child,
     pub ngrok_child: Option<Child>,
+    pub playit_child: Option<Child>,
     pub public_url: Option<String>,
 }
 
@@ -264,33 +267,6 @@ pub fn get_active_server(state: tauri::State<'_, AppState>) -> Option<ActiveServ
         server_id: s.server_id.clone(),
         public_url: s.public_url.clone(),
     })
-}
-
-async fn start_ngrok(port: u16) -> Result<(Child, String), String> {
-    let child = Command::new("ngrok")
-        .args(["tcp", &port.to_string(), "--log=stdout"])
-        .stdout(Stdio::piped())
-        .spawn()
-        .map_err(|_| "Failed to start ngrok. Is it installed & authenticated?".to_string())?;
-
-    // Give ngrok time to boot
-    sleep(Duration::from_secs(2));
-
-    let tunnels: Value = reqwest::get("https://127.0.0.1:4040/api/tunnels")
-        .await
-        .map_err(|_| "Failed to connect to ngrok API".to_string())?
-        .json()
-        .await
-        .map_err(|_| "Failed to parse ngrok API response".to_string())?;
-
-    let public_url = tunnels["tunnels"]
-        .as_array()
-        .and_then(|t| t.first())
-        .and_then(|t| t["public_url"].as_str())
-        .ok_or("No ngrok tunnel found")?
-        .to_string();
-
-    Ok((child, public_url))
 }
 
 #[tauri::command]
@@ -334,6 +310,20 @@ pub async fn start_server(
         return Err(format!("Java not found at {}", java.display()));
     }
 
+    let ngrok_base = {
+        let guard = state.ngrok_base_dir.lock().unwrap();
+        guard
+            .clone()
+            .ok_or("Ngrok base dir not initialized")?
+    };
+
+    let playit_base = {
+        let guard = state.playit_base_dir.lock().unwrap();
+        guard
+            .clone()
+            .ok_or("Playit base dir not initialized")?
+    };
+
     if !PathBuf::from(&server.path).exists() {
         return Err(format!("Server directory not found: {}", server.path));
     }
@@ -371,16 +361,30 @@ pub async fn start_server(
     };
 
     let mut ngrok_child = None;
+    let mut playit_child = None;
     let mut public_url = None;
 
     if let Some(tunnel) = &server.tunnel {
         if tunnel.enabled && tunnel.provider == "ngrok" {
+            if !ngrok_installed(&ngrok_base) {
+                install_ngrok(&ngrok_base).await?;
+            }
+
             // Async rule: never hold std::sync::MutexGuard across .await
             // The future must be Send (Tauri requirement)
             // Drop active_server mutex before awaiting — MutexGuard is not Send
-            let (child, url) = start_ngrok(25565).await?;
+            let (child, url) = start_ngrok(25565, &ngrok_base).await?;
             ngrok_child = Some(child);
             public_url = Some(url);
+        }
+
+        if tunnel.enabled && tunnel.provider == "playit" {
+            if !playit_installed(&playit_base) {
+                install_playit(&playit_base).await?;
+            }
+
+            let child = start_playit(&playit_base)?;
+            playit_child = Some(child);
         }
     }
 
@@ -389,6 +393,7 @@ pub async fn start_server(
         server_id: server.id.clone(),
         mc_child,
         ngrok_child,
+        playit_child,
         public_url,
     });
 
@@ -410,6 +415,10 @@ pub fn stop_server(state: tauri::State<'_, AppState>) -> Result<(), String> {
 
         if let Some(mut ngrok) = server.ngrok_child {
             ngrok.kill().ok();
+        }
+
+        if let Some(mut playit) = server.playit_child {
+            playit.kill().ok();
         }
 
         Ok(())

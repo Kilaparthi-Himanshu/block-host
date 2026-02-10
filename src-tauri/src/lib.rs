@@ -59,7 +59,7 @@ pub fn run() {
             let java_base = app
                 .path()
                 .app_data_dir()
-                .expect("Failed to get app data dir")
+                .expect("Failed to get app data dir for java")
                 .join("java");
 
             {
@@ -71,6 +71,40 @@ pub fn run() {
                     .unwrap();
 
                 *slot = Some(java_base);
+            }
+
+            let ngrok_base = app
+                .path()
+                .app_data_dir()
+                .expect("Failed to get app data dir for ngrok")
+                .join("ngrok");
+
+            {
+                let app_state = app.state::<AppState>();
+
+                let mut slot = app_state
+                    .ngrok_base_dir
+                    .lock()
+                    .unwrap();
+
+                *slot = Some(ngrok_base);
+            }
+
+            let playit_base = app
+                .path()
+                .app_data_dir()
+                .expect("Failed to get app data dir for ngrok")
+                .join("ngrok");
+
+            {
+                let app_state = app.state::<AppState>();
+
+                let mut slot = app_state
+                    .playit_base_dir
+                    .lock()
+                    .unwrap();
+
+                *slot = Some(playit_base);
             }
 
             Ok(())

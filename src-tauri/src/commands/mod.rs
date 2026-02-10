@@ -4,3 +4,5 @@ pub mod system;
 pub mod versions_loaders;
 pub mod misc;
 pub mod java_manager;
+pub mod ngrok_manager;
+pub mod playit_manager;
