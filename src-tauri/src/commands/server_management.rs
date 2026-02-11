@@ -12,16 +12,23 @@ use crate::{
 /// READING AND WRITING OF SERVERS
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum TunnelProvider {
+    Playit,
+    Ngrok,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TunnelConfig {
     pub enabled: bool,
-    pub provider: String, // "playit"
+    pub provider: TunnelProvider, // "playit"
 }
 
 impl Default for TunnelConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            provider: "playit".into(),
+            provider: TunnelProvider::Playit,
         }
     }
 }
@@ -365,26 +372,30 @@ pub async fn start_server(
     let mut public_url = None;
 
     if let Some(tunnel) = &server.tunnel {
-        if tunnel.enabled && tunnel.provider == "ngrok" {
-            if !ngrok_installed(&ngrok_base) {
-                install_ngrok(&ngrok_base).await?;
+        if tunnel.enabled {
+            match tunnel.provider {
+                TunnelProvider::Playit => {
+                    if !playit_installed(&playit_base) {
+                        install_playit(&playit_base).await?;
+                    }
+
+                    let child = start_playit(&playit_base)?;
+                    playit_child = Some(child);
+                }
+
+                TunnelProvider::Ngrok => {
+                    if !ngrok_installed(&ngrok_base) {
+                        install_ngrok(&ngrok_base).await?;
+                    }
+
+                    // Async rule: never hold std::sync::MutexGuard across .await
+                    // The future must be Send (Tauri requirement)
+                    // Drop active_server mutex before awaiting — MutexGuard is not Send
+                    let (child, url) = start_ngrok(25565, &ngrok_base).await?;
+                    ngrok_child = Some(child);
+                    public_url = Some(url);
+                }
             }
-
-            // Async rule: never hold std::sync::MutexGuard across .await
-            // The future must be Send (Tauri requirement)
-            // Drop active_server mutex before awaiting — MutexGuard is not Send
-            let (child, url) = start_ngrok(25565, &ngrok_base).await?;
-            ngrok_child = Some(child);
-            public_url = Some(url);
-        }
-
-        if tunnel.enabled && tunnel.provider == "playit" {
-            if !playit_installed(&playit_base) {
-                install_playit(&playit_base).await?;
-            }
-
-            let child = start_playit(&playit_base)?;
-            playit_child = Some(child);
         }
     }
 
@@ -413,12 +424,12 @@ pub fn stop_server(state: tauri::State<'_, AppState>) -> Result<(), String> {
         // wait for clean shutdown
         server.mc_child.wait().ok();
 
-        if let Some(mut ngrok) = server.ngrok_child {
-            ngrok.kill().ok();
-        }
-
         if let Some(mut playit) = server.playit_child {
             playit.kill().ok();
+        }
+
+        if let Some(mut ngrok) = server.ngrok_child {
+            ngrok.kill().ok();
         }
 
         Ok(())

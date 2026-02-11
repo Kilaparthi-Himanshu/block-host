@@ -33,14 +33,17 @@ fn zip_path(base: &PathBuf) -> PathBuf {
 /// Download URLs (official)
 fn playit_download_url() -> &'static str {
     #[cfg(target_os = "windows")]
-    { "https://playit.gg/downloads/playit-windows-x86_64.zip" }
+    { "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-windows-x86_64.exe" }
 
-    #[cfg(target_os = "macos")]
-    { "https://playit.gg/downloads/playit-macos-x86_64.zip" }
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    { "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-macos-x86_64" }
 
-    #[cfg(target_os = "linux")]
-    { "https://playit.gg/downloads/playit-linux-x86_64.zip" }
-}
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    { "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-macos-aarch64" }
+
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    { "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-x86_64" }
+} 
 
 /// Install Playit (transactional)
 pub async fn install_playit(base: &PathBuf) -> Result<(), String> {
@@ -49,43 +52,32 @@ pub async fn install_playit(base: &PathBuf) -> Result<(), String> {
     let marker = installing_marker(base);
     fs::write(&marker, b"").ok();
 
-    let bytes = Client::new()
+    let resp = Client::new()
         .get(playit_download_url())
         .send()
         .await
-        .map_err(|e| e.to_string())?
-        .bytes()
-        .await
         .map_err(|e| e.to_string())?;
 
-    let zip = zip_path(base);
-    fs::write(&zip, &bytes).map_err(|e| e.to_string())?;
-
-    let file = fs::File::open(&zip).map_err(|e| e.to_string())?;
-    let mut archive = ZipArchive::new(file).map_err(|e| e.to_string())?;
-
-    for i in 0..archive.len() {
-        let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
-        let outpath = base.join(file.name());
-
-        if file.is_dir() {
-            fs::create_dir_all(&outpath).ok();
-        } else {
-            let mut out = fs::File::create(&outpath).map_err(|e| e.to_string())?;
-            std::io::copy(&mut file, &mut out).map_err(|e| e.to_string())?;
-        }
+    if !resp.status().is_success() {
+        return Err(format!("Failed to download playit: {}", resp.status()));
     }
+
+    let bytes = resp.bytes().await.map_err(|e| e.to_string())?;
+
+    if bytes.len() < 500_000 {
+        return Err("Downloaded playit binary is suspiciously small".into());
+    }
+
+    let bin = playit_binary(base);
+    fs::write(&bin, &bytes).map_err(|e| e.to_string())?;
 
     #[cfg(not(target_os = "windows"))]
     {
         use std::os::unix::fs::PermissionsExt;
-        let bin = playit_binary(base);
         fs::set_permissions(&bin, fs::Permissions::from_mode(0o755)).ok();
     }
 
     fs::remove_file(&marker).ok();
-    fs::remove_file(&zip).ok();
-
     Ok(())
 }
 

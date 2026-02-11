@@ -10,7 +10,7 @@ use std::process::Command;
 use std::{fs, path::PathBuf};
 use uuid::Uuid;
 
-use crate::commands::server_management::{ServerConfig, TunnelConfig};
+use crate::commands::server_management::{ServerConfig, TunnelConfig, TunnelProvider};
 use crate::utils::path::{cleanup_empty_parent_dir, cleanup_server_dir, servers_dir};
 
 #[derive(Deserialize, Debug)]
@@ -123,7 +123,7 @@ pub async fn create_server(
         created_at: Utc::now().timestamp(),
         tunnel: Some(TunnelConfig {
             enabled: false,
-            provider: "ngrok".into(),
+            provider: TunnelProvider::Playit,
         }),
     };
 

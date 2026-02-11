@@ -94,7 +94,7 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .expect("Failed to get app data dir for ngrok")
-                .join("ngrok");
+                .join("playit");
 
             {
                 let app_state = app.state::<AppState>();
