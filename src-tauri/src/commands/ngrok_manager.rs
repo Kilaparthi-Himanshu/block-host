@@ -71,7 +71,7 @@ pub async fn install_ngrok(base: &PathBuf) -> Result<(), String> {
 
     #[cfg(not(target_os = "windows"))]
     {
-        use std::os::unix::fs::PermissionExt;
+        use std::os::unix::fs::PermissionsExt;
         let bin = ngrok_binary(base);
         fs::set_permissions(&bin, fs::Permissions::from_mode(0o755)).ok();
     }
