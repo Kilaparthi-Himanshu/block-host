@@ -120,16 +120,35 @@ pub fn playit_installed(base: &PathBuf) -> bool {
     true
 }
 
+use std::os::windows::process::CommandExt;
+
+const CREATE_NEW_CONSOLE: u32 = 0x00000010;
+
 pub fn start_playit(base: &PathBuf) -> Result<Child, String> {
     let bin = playit_binary(base);
 
+    // let child = Command::new("cmd")
+    //     .args([
+    //         "/C",
+    //         "start",
+    //         "",
+    //         bin.to_str().unwrap(),
+    //     ])
+    //     .spawn()
+    //     .map_err(|e| e.to_string())?;
+
     let child = Command::new(bin)
-        .arg("agent")
-        .current_dir(base)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .creation_flags(CREATE_NEW_CONSOLE)
         .spawn()
         .map_err(|e| e.to_string())?;
+
+    // let child = Command::new(bin)
+    //     .arg("agent")
+    //     .current_dir(base)
+    //     .stdout(Stdio::null())   // or null if you want logs
+    //     .stderr(Stdio::null())
+    //     .spawn()
+    //     .map_err(|e| e.to_string())?;
 
     Ok(child)
 }
