@@ -13,10 +13,6 @@ import { refreshServers } from "@/app/utils/server/refreshServers";
 import DiscreteSlider from "../misc/Slider";
 import { ramMarks } from "./ServerCreateModal";
 
-// TODO: Add Delete Server Button
-// TODO: Add Server Name valdiation
-// TODO: Add Game Mode Chane
-
 export type ServerProperties = {
     motd: string,
     online_mode: boolean,
@@ -253,15 +249,20 @@ export const ServerSettingsModal = ({
 
                 <div className="w-full h-full flex flex-col gap-8 p-4 font-semibold overflow-y-auto overflow-x-hidden app-scroll">
                     <div className="flex flex-col gap-3 w-1/2">
-                        <span>Name Of The Server:</span>
+                        <span>Instanc Name::</span>
 
                         <input
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 min-h-11 h-11 max-h-50 app-scroll" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 min-h-11 h-11 max-h-50 app-scroll cursor-not-allowed opacity-60" 
                             value={config.name}
-                            onChange={(e) => {
-                                updateConfigField("name", e.target.value)
-                            }}
+                            // onChange={(e) => {
+                            //     updateConfigField("name", e.target.value)
+                            // }}
+                            disabled
                         />
+
+                        <span className="text-xs text-gray-400">
+                            Intance name cannot be changed after creation.
+                        </span>
                     </div>
 
                     <div className="flex flex-col gap-3 w-1/2">
@@ -501,7 +502,22 @@ export const ServerSettingsModal = ({
                         </span>
                     </div>
 
-                    <div className="w-full flex justify-end absolute bottom-4 right-4">
+                    <div className="flex flex-col gap-3 bg-red-500/50 w-1/2 p-2 corner-squircle rounded-2xl border-2 border-red-500">
+                        <span className="text-red-200">Delete Instance:</span>
+
+                        <button 
+                            className="bg-red-400 px-4 py-2 text-red-900 corner-squircle rounded-2xl cursor-pointer shadow-xl active:scale-97 active:bg-red-600 transition-[scale,background] size-max"
+                            onClick={() => console.log("FF")}
+                        >
+                            Delete
+                        </button>
+
+                        <span className={`text-sm text-red-400 transition-colors`}>
+                            THIS ACTION CANNOT BE REVERSED!
+                        </span>
+                    </div>
+
+                    <div className="w-max flex justify-end absolute bottom-4 right-4">
                         <button 
                             className="bg-amber-400 px-4 py-2 text-stone-800 corner-squircle rounded-2xl cursor-pointer shadow-xl active:scale-97 active:bg-[#bb8e1e] transition-[scale,background]"
                             onClick={handleEditServerProperties}

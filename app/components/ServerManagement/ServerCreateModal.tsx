@@ -184,6 +184,10 @@ export const ServerCreateModal = ({
                         <span className="text-xs text-gray-400">
                             Allowed: letters, numbers, - and _
                         </span>
+
+                        <span className="text-xs text-amber-400">
+                            Intance name cannot be changed after creation.
+                        </span>
                     </div>
 
                     <div className="flex flex-col gap-3">

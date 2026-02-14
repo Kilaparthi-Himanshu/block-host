@@ -132,6 +132,7 @@ pub fn playit_installed(base: &PathBuf) -> bool {
 
     true
 }
+
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
