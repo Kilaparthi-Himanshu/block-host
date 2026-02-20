@@ -15,37 +15,39 @@ export type ServerConfig = {
     }
 }
 
-export type ActiveServer = {
+export type ActiveServerInfo = {
+    server_name: string,
     server_id: string,
-    // public_url: string,
+    public_url: string | null,
 }
 
 export const isMacAtom = atom<boolean | null>(null);
 
 export const serversAtom = atom<ServerConfig[] | null>(null);
 
-export const activeServerAtom = atom<ActiveServer | null>(null);
+export const activeServerAtom = atom<ActiveServerInfo | null>(null);
 
 export type GlobalLoaderState = {
     visible: boolean;
     message?: string;
 }
-
 export const globalLoaderAtom = atom<GlobalLoaderState>({
     visible: false,
     message: undefined,
 });
-
 export const showGlobalLoaderAtom = atom(
     null,
     (_get, set, message?: string) => {
         set(globalLoaderAtom, { visible: true, message });
     }
 );
-
 export const hideGlobalLoaderAtom = atom(
     null,
     (_get, set) => {
         set(globalLoaderAtom, { visible: false, message: undefined });
     }
 );
+
+export const mcLogsAtom = atom<string[]>([]);
+
+export const playitLogsAtom = atom<string[]>([]);

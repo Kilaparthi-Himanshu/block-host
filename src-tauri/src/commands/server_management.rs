@@ -1,12 +1,13 @@
 use std::io::BufRead;
 use std::{fs, path::PathBuf, process::Command};
 
+use playit_api_client::PlayitApi;
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
 
 use crate::commands::java_manager::{install_java, java_binary, java_installed, require_java};
 use crate::commands::ngrok_manager::{install_ngrok, ngrok_binary, ngrok_installed, start_ngrok};
-use crate::commands::playit_manager::{install_playit, playit_installed, start_playit};
+use crate::commands::playit_manager::{get_playit_public_url, install_playit, playit_binary, playit_installed, start_playit};
 use crate::{
     commands::server_creation::LoaderType, state::app_state::AppState, utils::path::servers_dir,
 };
@@ -255,6 +256,7 @@ pub fn update_server_config(
 
 #[derive(Debug)]
 pub struct ActiveServer {
+    pub server_name: String,
     pub server_id: String,
     pub mc_child: Child,
     pub ngrok_child: Option<Child>,
@@ -264,15 +266,17 @@ pub struct ActiveServer {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActiveServerInfo {
+    pub server_name: String,
     pub server_id: String,
     pub public_url: Option<String>,
 }
 
 #[tauri::command]
 pub fn get_active_server(state: tauri::State<'_, AppState>) -> Option<ActiveServerInfo> {
-    let active = state.active_server.lock().unwrap();
+    let active_server = state.active_server.lock().unwrap();
 
-    active.as_ref().map(|s| ActiveServerInfo {
+    active_server.as_ref().map(|s| ActiveServerInfo {
+        server_name: s.server_name.clone(),
         server_id: s.server_id.clone(),
         public_url: s.public_url.clone(),
     })
@@ -282,7 +286,7 @@ pub fn get_active_server(state: tauri::State<'_, AppState>) -> Option<ActiveServ
 pub async fn start_server(
     server: ServerConfig,
     state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
+) -> Result<ActiveServerInfo, String> {
     // check state synchronously
     {
         let mut active = state.active_server.lock().unwrap();
@@ -367,12 +371,43 @@ pub async fn start_server(
                     "nogui".into(),
                 ])
                 .current_dir(&server.path)
+                .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn()
                 .map_err(|e| e.to_string())?
         }
     };
+
+    // Logging to frontend
+    let app = {
+        let guard = state.app_handle.lock().unwrap();
+        guard
+            .clone()
+            .ok_or("App handle not initialized")?
+    };
+
+    if let Some(stdout) = mc_child.stdout.take() {
+        let app = app.clone();
+
+        std::thread::spawn(move || {
+            let reader = std::io::BufReader::new(stdout);
+            for line in reader.lines().flatten() {
+                let _ = app.emit("mc-log", line);
+            }
+        });
+    }
+
+    if let Some(stderr) = mc_child.stderr.take() {
+        let app = app.clone();
+
+        std::thread::spawn(move || {
+            let reader = std::io::BufReader::new(stderr);
+            for line in reader.lines().flatten() {
+                let _ = app.emit("mc-log", format!("[ERR] {}", line));
+            }
+        });
+    }
 
     let mut ngrok_child = None;
     let mut playit_child = None;
@@ -388,6 +423,39 @@ pub async fn start_server(
 
                     let child = start_playit(&playit_base)?;
                     playit_child = Some(child);
+
+                    if let Some(child) = playit_child.as_mut() {
+                        if let Some(stdout) = child.stdout.take() {
+                            let app = app.clone();
+
+                            std::thread::spawn(move || {
+                                let reader = std::io::BufReader::new(stdout);
+                                for line in reader.lines().flatten() {
+                                    let _ = app.emit("playit-log", line);
+                                }
+                            });
+                        }
+
+                        if let Some(stderr) = child.stderr.take() {
+                            let app = app.clone();
+
+                            std::thread::spawn(move || {
+                                let reader = std::io::BufReader::new(stderr);
+                                for line in reader.lines().flatten() {
+                                    let _  = app.emit("playit-log", format!("[ERR] {}", line));
+                                }
+                            });
+                        }
+                    }
+
+                    let url = get_playit_public_url(app.clone()).await?;
+
+                    let _ = app.emit(
+                        "playit-log",
+                        format!("[PLAYIT] public url: {}", url),
+                    );
+
+                    public_url = Some(url);
                 }
 
                 TunnelProvider::Ngrok => {
@@ -406,26 +474,15 @@ pub async fn start_server(
         }
     }
 
-    // Logging to frontend
-    let app = {
-        let guard = state.app_handle.lock().unwrap();
-        guard
-            .clone()
-            .ok_or("App handle not initialized")?
+    let info = ActiveServerInfo {
+        server_name: server.name.clone(),
+        server_id: server.id.clone(),
+        public_url: public_url.clone(),
     };
-
-    if let Some(stdout) = mc_child.stdout.take() {
-        let reader = std::io::BufReader::new(stdout);
-
-        std::thread::spawn(move || {
-            for line in reader.lines().flatten() {
-                let _ = app.emit("mc-log", line);
-            }
-        });
-    }
 
     let mut active = state.active_server.lock().unwrap();
     *active = Some(ActiveServer {
+        server_name: server.name.clone(),
         server_id: server.id.clone(),
         mc_child,
         ngrok_child,
@@ -433,7 +490,7 @@ pub async fn start_server(
         public_url,
     });
 
-    Ok(())
+    Ok(info)
 }
 
 #[tauri::command]

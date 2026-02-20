@@ -5,6 +5,8 @@ use std::{
 };
 
 use reqwest::Client;
+use serde_json::Value;
+use tauri::{AppHandle, Emitter};
 use zip::ZipArchive;
 
 /// Playit Binary Resolution
@@ -143,28 +145,20 @@ const CREATE_NEW_CONSOLE: u32 = 0x00000010;
 pub fn start_playit(base: &PathBuf) -> Result<Child, String> {
     let bin = playit_binary(base);
 
-    // let child = Command::new("cmd")
-    //     .args([
-    //         "/C",
-    //         "start",
-    //         "",
-    //         bin.to_str().unwrap(),
-    //     ])
+    // let child = Command::new(bin)
+    //     .creation_flags(CREATE_NEW_CONSOLE)
     //     .spawn()
     //     .map_err(|e| e.to_string())?;
 
     let child = Command::new(bin)
-        .creation_flags(CREATE_NEW_CONSOLE)
+        .current_dir(base)
+        .args(["--stdout", "start"])
+        .env("RUST_LOG", "info")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| e.to_string())?;
-
-    // let child = Command::new(bin)
-    //     .arg("agent")
-    //     .current_dir(base)
-    //     .stdout(Stdio::null())   // or null if you want logs
-    //     .stderr(Stdio::null())
-    //     .spawn()
-    //     .map_err(|e| e.to_string())?;
 
     Ok(child)
 }
@@ -183,4 +177,86 @@ pub fn start_playit(base: &PathBuf) -> Result<Child, String> {
         .args(["-e", bin.to_str().ok_or("Invalid playit path")?])
         .spawn()
         .map_err(|e| e.to_string())
+}
+
+use playit_api_client::PlayitApi;
+use std::time::Duration;
+
+pub async fn get_playit_public_url(app: AppHandle) -> Result<String, String> {
+    let secret = read_playit_secret()?;
+    let api = PlayitApi::create("https://api.playit.gg".to_string(), Some(secret));
+
+    let data = api
+        .agents_rundata()
+        .await
+        .map_err(|e| format!("Playit API error: {}", e))?;
+
+    data.tunnels
+        .into_iter()
+        .next()
+        .map(|t| t.assigned_domain)
+        .ok_or("No Playit tunnel found".into())
+}
+
+fn playit_config_path() -> Option<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        // Try LOCALAPPDATA first   
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            let p = PathBuf::from(&local)
+                .join("playit_gg")
+                .join("playit.toml");
+            if p.exists() {
+                return Some(p);
+            }
+        }
+
+        // Fallback to APPDATA (older installs)
+        if let Ok(roaming) = std::env::var("APPDATA") {
+            let p = PathBuf::from(&roaming)
+                .join("playit_gg")
+                .join("playit.toml");
+            if p.exists() {
+                return Some(p);
+            }
+        }
+
+        None
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::env::var("HOME")
+            .ok()
+            .map(|p| PathBuf::from(p)
+                .join(".local")
+                .join("share")
+                .join("playit_gg")
+                .join("playit.toml"))
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        None
+    }
+}
+
+fn read_playit_secret() -> Result<String, String> {
+    let path = playit_config_path().ok_or("Unsupported OS for Playit")?;
+    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read Playit config: {}", e))?;
+
+    for line in content.lines() {
+        if let Some(rest) = line.strip_prefix("secret_key") {
+            let secret = rest
+                .split("=")
+                .nth(1)
+                .map(|s| s.trim().trim_matches('"'))
+                .filter(|s| !s.is_empty())
+                .ok_or("Invalid secret_key format")?;
+
+            return Ok(secret.to_string());
+        }
+    }
+
+    Err("secret_key not found in playit.toml".into())
 }

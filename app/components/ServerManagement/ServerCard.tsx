@@ -1,6 +1,6 @@
 'use client';
 
-import { activeServerAtom, hideGlobalLoaderAtom, isMacAtom, ServerConfig, showGlobalLoaderAtom } from "@/app/atoms"
+import { activeServerAtom, ActiveServerInfo, hideGlobalLoaderAtom, isMacAtom, ServerConfig, showGlobalLoaderAtom } from "@/app/atoms"
 import { invoke } from "@tauri-apps/api/core";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { FaCirclePlay } from "react-icons/fa6";
@@ -10,6 +10,7 @@ import { ServerSettingsModal } from "./ServerSettingsModal";
 import { useEffect, useState } from "react";
 import ModalRenderer from "../ModalRenderer";
 import { notifyError } from "@/app/utils/alerts";
+import { resetLogs } from "@/app/utils/server/resetLogs";
 
 export const ServerCard = ({
     server
@@ -46,11 +47,10 @@ export const ServerCard = ({
                 notifyError("Another server is already running.");
             } else {
                 setGlobalShowLoader("Starting server...");
-                await invoke("start_server", { server });
-                setActiveServer({
-                    server_id: server.id,
-                    // public_url: "local" // placeholder for now
-                });
+                resetLogs(); // Reset old logs
+                const startedServer = await invoke<ActiveServerInfo>("start_server", { server });
+                console.log(startedServer);
+                setActiveServer(startedServer);
             }
         } catch (err) {
             notifyError(err?.toString() ?? "Failed to start server");

@@ -6,7 +6,7 @@ import { ServerCreateCard } from "./components/ServerManagement/ServerCreateCard
 import ModalRenderer from "./components/ModalRenderer";
 import { useEffect, useMemo, useState } from "react";
 import { ServerCreateModal } from "./components/ServerManagement/ServerCreateModal";
-import { ActiveServer, activeServerAtom, globalLoaderAtom, ServerConfig, serversAtom } from "./atoms";
+import { ActiveServerInfo, activeServerAtom, globalLoaderAtom, ServerConfig, serversAtom } from "./atoms";
 import { useAtom, useAtomValue } from "jotai";
 import { ActiveServerBanner } from "./components/ServerManagement/ActiveServerBanner";
 import { LoaderRenderer } from "./components/misc/Loader";
@@ -20,7 +20,7 @@ export default function Home() {
 
     useEffect(() => {
         async function loadActiveServer() {
-            const active = await invoke<ActiveServer | null>('get_active_server');
+            const active = await invoke<ActiveServerInfo | null>('get_active_server');
             setActiveServer(active);
         }
 

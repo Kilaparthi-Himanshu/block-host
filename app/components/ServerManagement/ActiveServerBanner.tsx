@@ -15,7 +15,12 @@ export const ActiveServerBanner = () => {
     return (
         <div className="w-full py-1 max-h-max bg-amber-400 text-black flex max-sm:flex-col max-md:items-start max-md:gap-4 items-center justify-between px-4 z-500 font-mono">
             <span className="text-green-800 font-semibold">
-                Server running — ID: {activeServer.server_id}
+                Server running - Name: {activeServer.server_name}
+                , Public Url: {
+                    activeServer.public_url 
+                    ? <span className="text-amber-800">{activeServer.public_url}</span> 
+                    : "No Public URL available"
+                }
             </span>
 
             <button
