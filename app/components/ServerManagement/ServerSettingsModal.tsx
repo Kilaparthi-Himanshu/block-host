@@ -276,10 +276,10 @@ export const ServerSettingsModal = ({
 
                 <div className="w-full h-full flex flex-col gap-8 p-4 font-semibold overflow-y-auto overflow-x-hidden app-scroll">
                     <div className="flex flex-col gap-3 w-1/2">
-                        <span>Instanc Name::</span>
+                        <span>Instanc Name:</span>
 
                         <input
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 min-h-11 h-11 max-h-50 app-scroll cursor-not-allowed opacity-60" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 min-h-11 h-11 max-h-50 app-scroll cursor-not-allowed opacity-60 cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow" 
                             value={config.name}
                             // onChange={(e) => {
                             //     updateConfigField("name", e.target.value)
@@ -319,7 +319,7 @@ export const ServerSettingsModal = ({
                         <span>Message Of The Day:</span>
 
                         <textarea
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 min-h-11 h-11 max-h-50 app-scroll" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 min-h-11 h-11 max-h-50 app-scroll cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow" 
                             value={properties.motd}
                             onChange={(e) => {
                                 updatePropertyField("motd", e.target.value)
@@ -392,7 +392,7 @@ export const ServerSettingsModal = ({
                         <span>Max Players:</span>
 
                         <input 
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2 cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow"
                             value={properties.max_players ?? 20}
                             onChange={(e) => updatePropertyField("max_players", Number(e.target.value))}
                             type="number"
@@ -464,7 +464,7 @@ export const ServerSettingsModal = ({
                         <span>Spawn Protection:</span>
 
                         <input 
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2 cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow" 
                             value={properties.spawn_protection ?? 16}
                             onChange={(e) => handleNumberChange("spawn_protection", e.target.value)}
                             onBlur={() => handleNumberBlur("spawn_protection", 0, 128)}
@@ -490,7 +490,7 @@ export const ServerSettingsModal = ({
                         <span>View Distance:</span>
 
                         <input 
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2 cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow" 
                             value={properties.view_distance ?? 10}
                             onChange={(e) => handleNumberChange("view_distance", e.target.value)}
                             onBlur={() => handleNumberBlur("view_distance", 2, 32)}
@@ -509,7 +509,7 @@ export const ServerSettingsModal = ({
                         <span>Simulation Distance:</span>
 
                         <input 
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2 cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow" 
                             value={properties.simulation_distance ?? 10}
                             onChange={(e) => handleNumberChange("simulation_distance", e.target.value)}
                             onBlur={() => handleNumberBlur("simulation_distance", 2, Math.min(32, properties.view_distance))}
@@ -534,7 +534,7 @@ export const ServerSettingsModal = ({
                         <span>Server Port:</span>
 
                         <input 
-                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2" 
+                            className="outline-0 border-2 focus:border-amber-400 transition-[border] corner-squircle rounded-[20px] p-2 w-1/2 cyberpunk:rounded-none cyberpunk:rounded-br-xl cyberpunk:corner-br-bevel cyberpunk:focus:border-cyber-yellow" 
                             value={properties.server_port ?? 10}
                             onChange={(e) => handleNumberChange("server_port", e.target.value)}
                             onBlur={() => handleNumberBlur("server_port", 1024, 65535)}
@@ -553,11 +553,11 @@ export const ServerSettingsModal = ({
                         </span>
                     </div>
 
-                    <div className="flex flex-col gap-3 bg-red-500/50 w-1/2 p-2 corner-squircle rounded-2xl border-2 border-red-500">
+                    <div className="flex flex-col gap-3 bg-red-500/50 w-1/2 p-2 corner-squircle rounded-2xl border-2 border-red-500 cyberpunk:rounded-none cyberpunk:rounded-tr-xl cyberpunk:corner-tr-bevel cyberpunk:rounded-bl-2xl cyberpunk:corner-bl-bevel cyberpunk:focus:border-cyber-yellow">
                         <span className="text-red-200">Delete Instance:</span>
 
                         <button 
-                            className="bg-red-400 px-4 py-2 text-red-900 corner-squircle rounded-2xl cursor-pointer shadow-xl active:scale-97 active:bg-red-600 transition-[scale,background] size-max"
+                            className="bg-red-400 px-4 py-2 text-red-900 corner-squircle rounded-2xl cursor-pointer shadow-xl active:scale-97 active:bg-red-600 transition-[scale,background] size-max cyberpunk:rounded-none cyberpunk:rounded-tr-xl cyberpunk:rounded-bl-xl cyberpunk:corner-bl-bevel cyberpunk:corner-tr-bevel"
                             onClick={() => setDeleteModalOpen(true)}
                         >
                             Delete

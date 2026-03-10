@@ -166,7 +166,7 @@ export const ServerCreateModal = ({
                 />
 
                 <div className="w-full h-max p-4 pr-2 ">
-                    <span className="text-2xl font-semibold cyberpunk:bg-red-900 cyberpunk-input cyberpunk:px-3 cyberpunk:py-2">Create Server</span>
+                    <span className="text-2xl font-semibold">Create Server</span>
                 </div>
 
                 <div className="border-b border-amber-400 w-full" />

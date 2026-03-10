@@ -69,7 +69,7 @@ export const ServerCard = ({
                 <ServerSettingsModal setIsOpen={setServerSettingsModalOpen} server={server} />
             </ModalRenderer>
 
-            <div className={`w-50 h-65 corner-squircle bg-neutral-800 flex flex-col overflow-hidden cursor-pointer relative shadow-md ${isMac ? 'rounded-[30px]' : ' rounded-[50px]'} ${isActive && 'border-2 border-green-500'} cyberpunk: bg-red-900/70 cyberpunk:rounded-none cyberpunk:rounded-tl-[40px] cyberpunk:corner-tl-bevel cyberpunk:rounded-br-[30px] cyberpunk:corner-br-bevel cyberpunk-border cyberpunk-glow`}>
+            <div className={`w-50 h-65 corner-squircle bg-neutral-800 flex flex-col overflow-hidden cursor-pointer relative shadow-md ${isMac ? 'rounded-[30px]' : 'rounded-[50px]'} ${isActive && 'border-2 border-green-500'} cyberpunk:bg-red-900/70 cyberpunk:rounded-none cyberpunk:rounded-tl-[40px] cyberpunk:corner-tl-bevel cyberpunk:rounded-br-[30px] cyberpunk:corner-br-bevel cyberpunk-border cyberpunk-glow`}>
                 <div className="absolute inset-0 flex flex-col pointer-events-none">
                     <button 
                         onClick={handlePlayStop}

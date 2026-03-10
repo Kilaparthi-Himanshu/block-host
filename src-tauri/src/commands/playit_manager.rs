@@ -201,7 +201,7 @@ pub async fn get_playit_public_url(app: AppHandle) -> Result<String, String> {
 fn playit_config_path() -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     {
-        // Try LOCALAPPDATA first   
+        // Try LOCALAPPDATA first
         if let Ok(local) = std::env::var("LOCALAPPDATA") {
             let p = PathBuf::from(&local)
                 .join("playit_gg")

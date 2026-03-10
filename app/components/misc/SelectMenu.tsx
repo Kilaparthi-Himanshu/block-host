@@ -50,7 +50,7 @@ export const SelectMenu = ({
             <AnimatePresence>
                 {open && items &&
                     <motion.div 
-                        className="w-full max-h-60 overflow-y-auto overflow-x-visible corner-squircle rounded-[20px] bg-cyan-900 absolute mt-2 app-scroll p-2 shadow-2xl z-999 cyberpunk:bg-cyber-black cyberpunk:rounded-none cyberpunk:rounded-tl-2xl cyberpunk:corner-tl-bevel"
+                        className="w-full max-h-60 overflow-y-auto overflow-x-visible corner-squircle rounded-[20px] bg-cyan-900 absolute mt-2 app-scroll p-2 shadow-2xl z-999 cyberpunk:bg-cyber-black cyberpunk:rounded-none cyberpunk:rounded-tl-2xl cyberpunk:corner-tl-bevel cyberpunk:border cyberpunk:border-cyber-blue"
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -58,7 +58,7 @@ export const SelectMenu = ({
                     >
                         {items.map(item =>
                             <div key={item} 
-                                className="w-full h-10 p-2 hover:bg-gray-900 transition-[background] duration-100 cursor-pointer corner-squircle rounded-[20px] cyberpunk:rounded-none cyberpunk:rounded-tl-[10px] cyberpunk:corner-tl-bevel cyberpunk:text-cyber-cyan cyberpunk:hover:bg-cyber-gray"
+                                className="w-full h-10 p-2 hover:bg-gray-900 transition-[background] duration-100 cursor-pointer corner-squircle rounded-[20px] cyberpunk:rounded-none cyberpunk:rounded-tl-[10px] cyberpunk:corner-tl-bevel cyberpunk:text-cyber-cyan cyberpunk:hover:outline cyberpunk:hover:outline-cyber-yellow"
                                 onClick={() => {
                                     onChange(item);
                                     setOpen(false);
